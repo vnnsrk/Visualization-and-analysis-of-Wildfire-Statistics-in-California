@@ -56,3 +56,29 @@ def populate_M_FIRE(yy1,mm1,yy2,mm2):
             outfile.write(decompressedFile.read())
 
 
+def create_global_grid_csv():
+    '''
+    divides the global degrees (360x180) by the dimensions of the monthly Active Fires CSV files (3600x1800 pixels)
+    to determine the geolocation of each element (pixel)
+    :return:
+    '''
+    N_pixels_lon = 3600
+    N_pixels_lat = 1800
+    delta_lon = 360./N_pixels_lon
+    delta_lat = 180./N_pixels_lat
+    # create longitude vector
+    lon_vec = []
+    lon_vec.append(-180)
+    for ii in range(N_pixels_lon):
+        lon_vec.append(lon_vec[ii]+delta_lon)
+    # create latitude vector
+    lat_vec = []
+    lat_vec.append(90)
+    for ii in range(N_pixels_lat):
+        lat_vec.append(lat_vec[ii] - delta_lat)
+
+    return lon_vec, lat_vec
+
+
+
+
