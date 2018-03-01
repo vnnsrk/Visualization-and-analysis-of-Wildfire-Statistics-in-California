@@ -8,10 +8,9 @@ import sys
 import os
 import numpy as np
 import pandas as pd
+import csv
+import itertools
 import gmaps
-import matplotlib.pyplot as plt
-
-data_path = './data/'
 
 def populate_M_FIRE(yy1,mm1,yy2=2017,mm2=11):
     '''
@@ -89,3 +88,55 @@ def create_global_grid_csv():
         lat_vec.append(lat_vec[ii] - delta_lat)
 
     return lat_vec, lon_vec
+
+
+def files_to_dfs():
+    '''
+    Reads all the csv files from the /data folder and returns a dictionary of the pandas dataframes for each month
+    '''
+    pds = {}
+    for dirpath, dnames, fnames in os.walk("./data/"):
+        for f in fnames:
+            if f.endswith(".csv"):
+                pds[f] = csv_to_df(os.path.join(dirpath, f))
+    return pds
+
+
+def csv_to_df(filename, lat1=90.0, lon1=-180.0, lat2=-90.0, lon2=180.0, keepland=False):
+    '''
+    Reads a csv file, converts it to a dataframe of lat-lon-mag columns, filters a particular location coordinate
+    and returns the dataframe
+    @param filename : string, represents filename
+    @param lat1,lat2,lon1,lon2 : float, latitudes and longitudes
+    dataframe for points between (lat1,lon1) and (lat2,lon2) are returned
+    '''
+    with open(filename, 'r') as f:
+        reader = csv.reader(f)
+        lis = []
+        for row in reader:
+            lis.extend(map(float, row))
+
+    lat, lon = create_global_grid_csv()
+    latlons = [i for i in itertools.product(lat, lon)]
+
+    # 0.1 - represents land, 99999.0 - represents water
+    if keepland:
+        df = pd.DataFrame([x + (y,) for x, y in zip(latlons, lis) if y not in [99999.0]],
+                          columns=('lat', 'lon', 'mag'))
+    else:
+        df = pd.DataFrame([x + (y,) for x, y in zip(latlons, lis) if y not in [0.1, 99999.0]],
+                      columns=('lat', 'lon', 'mag'))
+
+    df = df[(df.lat < lat1) & (df.lat > lat2)]
+    df = df[(df.lon > lon1) & (df.lon < lon2)]
+
+    return df
+
+
+def df_to_heatmap(df):
+    locations = df[['lat', 'lon']]
+    weights = df['mag']
+    fig = gmaps.figure()
+    fig.add_layer(gmaps.heatmap_layer(locations, weights=weights))
+
+    return fig
