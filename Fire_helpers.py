@@ -12,6 +12,7 @@ import csv
 import itertools
 import gmaps
 
+data_path = './data/'
 def populate_M_FIRE(yy1,mm1,yy2=2017,mm2=11):
     '''
     This function downloads and unzips monthly Active Fires CSV files from NEO global datasets in
