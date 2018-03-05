@@ -102,7 +102,7 @@ def files_to_dfs():
     return pds
 
 
-def csv_to_df(filename, lat1=90.0, lon1=-180.0, lat2=-90.0, lon2=180.0, keepland=False):
+def csv_to_df(filename, lat1=90.0, lon1=-180.0, lat2=-90.0, lon2=180.0, keepland=False,keepocean=False):
     '''
     Reads a csv file, converts it to a dataframe of lat-lon-mag columns, filters a particular location coordinate
     and returns the dataframe
@@ -120,8 +120,14 @@ def csv_to_df(filename, lat1=90.0, lon1=-180.0, lat2=-90.0, lon2=180.0, keepland
     latlons = [i for i in itertools.product(lat, lon)]
 
     # 0.1 - represents land, 99999.0 - represents water
-    if keepland:
+    if keepland and keepocean:
+        df = pd.DataFrame([x + (y,) for x, y in zip(latlons, lis)],
+                          columns=('lat', 'lon', 'mag'))
+    elif keepland:
         df = pd.DataFrame([x + (y,) for x, y in zip(latlons, lis) if y not in [99999.0]],
+                          columns=('lat', 'lon', 'mag'))
+    elif keepocean:
+        df = pd.DataFrame([x + (y,) for x, y in zip(latlons, lis) if y not in [0.1]],
                           columns=('lat', 'lon', 'mag'))
     else:
         df = pd.DataFrame([x + (y,) for x, y in zip(latlons, lis) if y not in [0.1, 99999.0]],
